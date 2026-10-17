@@ -1,0 +1,10 @@
+# generated on GitHub's Mac by XcodeGen / xcodebuild
+*.xcodeproj/
+build/
+build-logs/
+StemEye/Info.plist
+Broadcast/Info.plist
+StemEye/StemEye.entitlements
+Broadcast/Broadcast.entitlements
+.DS_Store
+*.p8

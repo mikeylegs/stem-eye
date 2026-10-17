@@ -1,0 +1,65 @@
+# Stem Eye -- the iPad app, built on GitHub's Mac (no Mac needed at home).
+#  * every push: generate the Xcode project, CHECK the frame code against a djay screen recording + a stand-in Controller
+#    (ci/check.sh), COMPILE the app + its broadcast extension for an iPad (unsigned)
+#  * Actions > Stem Eye > Run workflow with 'upload' ticked: also sign + send to TestFlight (needs the Apple settings, README)
+name: Stem Eye
+
+on:
+  push:
+    branches: [main]
+    paths: ['StemEye/**', 'Broadcast/**', 'Shared/**', 'ci/**', 'project.yml', 'ExportOptions.plist', '.github/workflows/stem-eye.yml']
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Sign and send to TestFlight (needs TEAM_ID + the ASC_ secrets)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: stem-eye-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ vars.RUNNER || 'macos-26' }}
+    timeout-minutes: 45
+    env:
+      BUNDLE_PREFIX: ${{ vars.BUNDLE_PREFIX || 'com.mikeylegs' }}
+      TEAM_ID: ${{ vars.TEAM_ID }}
+      CONTROLLER: ${{ vars.CONTROLLER }}
+      BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
+      NEED_XCODE_26: ${{ (github.event_name == 'workflow_dispatch' && inputs.upload) && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pick the newest Xcode
+        run: bash ci/xcode.sh
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      - name: Check the frame code on a djay recording
+        run: bash ci/check.sh
+
+      - name: Compile for iPad (unsigned)
+        run: bash ci/compile.sh
+
+      - name: Sign and send to TestFlight
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: bash ci/upload.sh
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stem-eye-logs-${{ github.run_number }}
+          path: build-logs/
+          if-no-files-found: ignore
+          retention-days: 14
