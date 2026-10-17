@@ -17,10 +17,10 @@ KEY="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
 if printf '%s' "$ASC_KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then printf '%s\n' "$ASC_KEY_P8" > "$KEY"; else printf '%s' "$ASC_KEY_P8" | base64 --decode > "$KEY"; fi
 trap 'rm -f "$KEY"' EXIT
 export ASC_KEY_PATH="$KEY"
-APP_ID="${BUNDLE_PREFIX}.stemeye"
+APP_ID="${BUNDLE_PREFIX}.djayreader"
 
 echo "== 1. app ids (registered once)"
-python3 ci/asc.py ids "$APP_ID" "Stem Eye" "$APP_ID.Broadcast" "Stem Eye Broadcast"
+python3 ci/asc.py ids "$APP_ID" "djay reader" "$APP_ID.broadcast" "djay reader broadcast"
 echo "== 2. the App Store Connect app"
 python3 ci/asc.py app "$APP_ID"
 
@@ -29,7 +29,7 @@ ARCHIVE="$RUNNER_TEMP/StemEye.xcarchive"
 APPP="$ARCHIVE/Products/Applications/StemEye.app"
 APPX="$APPP/PlugIns/StemEyeBroadcast.appex"
 ents(){ codesign -d --entitlements - --xml "$1" 2>/dev/null || codesign -d --entitlements :- "$1" 2>/dev/null; }
-has_group(){ ents "$1" | grep -q 'stemeye.shared'; }
+has_group(){ ents "$1" | grep -q 'djayreader.shared'; }
 # ad-hoc signed: keeps the entitlements (the keychain group the app + its broadcast share) for the App Store signing at export
 if ! xcodebuild -project StemEye.xcodeproj -scheme StemEye -configuration Release -destination 'generic/platform=iOS' \
   -archivePath "$ARCHIVE" DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \

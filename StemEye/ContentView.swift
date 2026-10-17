@@ -212,7 +212,7 @@ struct StatusRows: View {
 struct BroadcastButton: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
         let v = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 64, height: 64))
-        v.preferredExtension = (Bundle.main.bundleIdentifier ?? "") + ".Broadcast"
+        v.preferredExtension = (Bundle.main.bundleIdentifier ?? "") + ".broadcast"
         v.showsMicrophoneButton = false
         return v
     }

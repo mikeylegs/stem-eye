@@ -97,7 +97,7 @@ def cmd_app(ident):
         print("App Store Connect app: %s (%s)" % (a.get("name"), ident))
         return 0
     print("::error::No App Store Connect app for %s yet. Make it once: App Store Connect > Apps > + > New App > iOS, "
-          "any name (e.g. 'Stem Eye'), bundle ID %s, SKU stemeye. Then run this workflow again." % (ident, ident))
+          "any name (e.g. 'Stem Eye'), bundle ID %s, SKU %s. Then run this workflow again." % (ident, ident, ident.split('.')[-1]))
     return 1
 
 

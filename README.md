@@ -32,14 +32,14 @@ You only do this once. After that, every new version is one button on GitHub.
    - **Variables** tab:
      - `TEAM_ID` = your Team ID
      - Optional: `CONTROLLER` = the Controller's address (like `192.168.1.50`), baked in as the default
-     - Optional: `BUNDLE_PREFIX` (default `com.mikeylegs`, which makes the app `com.mikeylegs.stemeye`)
+     - Optional: `BUNDLE_PREFIX` (default `com.mikeylegs`, which makes the app `com.mikeylegs.djayreader` and its broadcast `com.mikeylegs.djayreader.broadcast`)
 4. **First run.** Go to **Actions › Stem Eye › Run workflow**, tick **upload**, and press Run. It registers the two app IDs with Apple. The first time, it then stops with *"No App Store Connect app … yet"*. That's expected.
 5. **Make the app record** (once). Go to **App Store Connect › Apps › + › New App**:
    - Platform: iOS
    - Name: anything not already taken on the App Store, e.g. `Stem Eye` or `Stem Eye Mike`
    - Language: English
-   - Bundle ID: pick `com.mikeylegs.stemeye`
-   - SKU: `stemeye`
+   - Bundle ID: pick `com.mikeylegs.djayreader`
+   - SKU: `djayreader`
 6. **Run the workflow again** with **upload** ticked. It takes about 10 minutes and ends with *"Sent build … to App Store Connect"*.
 7. **TestFlight.**
    - In App Store Connect, open the app › **TestFlight**. Wait for the build to finish processing (5–30 minutes; Apple emails you).
