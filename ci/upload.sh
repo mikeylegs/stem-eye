@@ -39,7 +39,7 @@ if ! xcodebuild -project StemEye.xcodeproj -scheme StemEye -configuration Releas
   rm -rf "$ARCHIVE"
   xcodebuild -project StemEye.xcodeproj -scheme StemEye -configuration Release -destination 'generic/platform=iOS' \
     -archivePath "$ARCHIVE" DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGNING_ALLOWED=NO archive > build-logs/archive-unsigned.log 2>&1 \
-    || { grep -E "error:" build-logs/archive-unsigned.log | head -40 || true; tail -40 build-logs/archive-unsigned.log; exit 1; }
+    || { grep -E "error:" build-logs/archive-unsigned.log | head -40 || true; tail -40 build-logs/archive-unsigned.log; bash ci/annotate.sh "archive" build-logs/archive-unsigned.log "error:" 60; exit 1; }
   codesign -f -s - --entitlements Broadcast/Broadcast.entitlements "$APPX"
   codesign -f -s - --entitlements StemEye/StemEye.entitlements "$APPP"
 fi
@@ -55,6 +55,6 @@ cp ExportOptions.plist "$OPTS"
 /usr/libexec/PlistBuddy -c "Set :teamID $TEAM_ID" "$OPTS"
 xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist "$OPTS" -exportPath "$RUNNER_TEMP/export" \
   -allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-  > build-logs/export.log 2>&1 || { grep -E "error:|Error" build-logs/export.log | head -40 || true; tail -60 build-logs/export.log; exit 1; }
+  > build-logs/export.log 2>&1 || { grep -E "error:|Error" build-logs/export.log | head -40 || true; tail -60 build-logs/export.log; bash ci/annotate.sh "export" build-logs/export.log "error|Error" 60; exit 1; }
 tail -20 build-logs/export.log
 echo "Sent build $BUILD_NUMBER of $APP_ID to App Store Connect. TestFlight shows it after Apple's processing (usually 5-30 minutes)."
