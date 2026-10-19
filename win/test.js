@@ -11,7 +11,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let bad=0; const note=(ok,m)=>
     const frames=process.argv[2], startFile=path.join(process.env.RUNNER_TEMP||W,'start.txt'); let T0=null;
     for(let i=0;i<120;i++){ await sleep(500); const m=(await req('GET','/sr/state')).j; if(m && m.mirror && m.mirror.running && m.mirror.err && /no open window/.test(m.mirror.err)) break; if(i%10===9) console.log('waiting for the mirror reader: '+JSON.stringify(m&&m.mirror)); }
     console.log('the mirror reader is up and looking for a window; opening the stand-in UxPlay window');
-    cp.spawn('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',path.join(W,'fake-uxplay.ps1'),'-Frames',frames,'-Start',startFile],{detached:true,stdio:'ignore'}).unref();
+    const flog=path.join(process.env.RUNNER_TEMP||W,'fake.log'), fd=fs.openSync(flog,'w'); const fk=cp.spawn('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',path.join(W,'fake-uxplay.ps1'),'-Frames',frames,'-Start',startFile],{stdio:['ignore',fd,fd]}); fk.on('exit',c=>console.log('stand-in window exited '+c));
+    setTimeout(()=>{ try{ console.log('windows: '+cp.execSync('powershell.exe -NoProfile -Command "Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { $_.ProcessName + \': \' + $_.MainWindowTitle }"',{encoding:'utf8'}).replace(/\r?\n/g,' | ')); }catch(e){ console.log('window list failed '+e.message); } }, 8000);
     const t0=Date.now();
     while(Date.now()-t0<40000){ await sleep(200); const r=await req('GET','/sr/state'); st=r.j; if(!st) continue; lastM=st.mirror; maxFps=Math.max(maxFps, st.mirror.fps||0); if(st.live && firstLive==null) firstLive=Date.now()-t0;
       if(T0==null && startFile && fs.existsSync(startFile)) T0=+fs.readFileSync(startFile,'utf8');
@@ -27,5 +28,6 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let bad=0; const note=(ok,m)=>
       if(early.length){ const e=early[early.length-1].at-truth; note(Math.abs(e)<200, 'drop predicted '+(e>=0?'+':'')+Math.round(e)+' ms from where the window shows it (minus the 150 ms delay)'); } }
     else note(false, 'the stand-in window never wrote its start time');
     await req('POST','/liveshow',{stemMirror:false}); await sleep(3000); st=(await req('GET','/sr/state')).j; note(st && !st.mirror.running, 'switching it off stops PowerShell');
+    try{ const lg=fs.readFileSync(path.join(process.env.RUNNER_TEMP||W,'fake.log'),'utf8').trim(); if(lg) note(false,'stand-in window said: '+lg.slice(0,900)); }catch(e){}
   }catch(e){ note(false,'test crashed: '+e.message); } finally{ ch.kill(); if(cerr.trim()) console.log('controller stderr: '+cerr); }
   console.log(bad?'FAIL '+bad:'ALL OK'); process.exit(bad?1:0); })();
