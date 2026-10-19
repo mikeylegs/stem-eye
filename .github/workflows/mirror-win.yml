@@ -1,0 +1,32 @@
+# 19a STEM MIRROR, checked on a real Windows machine: Windows PowerShell 5.1 compiles StemMirror.cs, grabs a stand-in UxPlay window that
+# plays djay frames, and feeds a SMOKE copy of the Controller; results are annotations. Runs on pushes to the mirror-ci branch only.
+name: Stem Mirror (Windows)
+on:
+  push:
+    branches: [mirror-ci]
+  workflow_dispatch:
+jobs:
+  win:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Screen
+        shell: powershell
+        run: |
+          try { Set-DisplayResolution -Width 1920 -Height 1080 -Force -ErrorAction Stop; 'resolution set' } catch { 'Set-DisplayResolution: ' + $_.Exception.Message }
+          Add-Type -AssemblyName System.Windows.Forms; $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          Write-Output ('::notice title=screen::' + $b.Width + ' x ' + $b.Height + ', PowerShell ' + $PSVersionTable.PSVersion + ', .NET ' + [Environment]::Version)
+      - name: djay frames
+        shell: powershell
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { choco install ffmpeg -y --no-progress | Out-Null; $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') }
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\frames" | Out-Null
+          ffmpeg -v error -i ci/djay-clip.mp4 -vf "fps=15,scale=1440:1080" -q:v 3 "$env:RUNNER_TEMP\frames\f%04d.jpg"
+          Write-Output ('frames: ' + (Get-ChildItem "$env:RUNNER_TEMP\frames").Count)
+      - name: Mirror check
+        shell: powershell
+        run: node win/test.js "$env:RUNNER_TEMP\frames"
